@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -402,6 +401,55 @@ footer {
   .gallery-grid { grid-template-columns: repeat(2, 1fr); }
   .event-card { flex-wrap: wrap; }
 }
+
+/* ── ADMIN ── */
+.admin-lock {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  display: none;
+}
+.admin-lock.open { display: flex; }
+.admin-box {
+  background: var(--bg3); border: 1px solid var(--border-strong);
+  padding: 2.5rem; width: 340px; text-align: center;
+}
+.admin-box h2 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--white); margin-bottom: 0.5rem; }
+.admin-box p { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1.5rem; font-style: italic; }
+.admin-box input {
+  width: 100%; padding: 10px 12px; margin-bottom: 1rem;
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text); font-size: 1rem; font-family: 'Crimson Pro', serif;
+  text-align: center; letter-spacing: 0.1em;
+}
+.admin-box input:focus { outline: none; border-color: var(--gold); }
+.admin-error { color: #c44a4a; font-size: 0.85rem; margin-bottom: 0.75rem; display: none; }
+#admin-section {
+  padding: 5rem 2rem; background: var(--bg2);
+  border-top: 1px solid var(--border); display: none;
+}
+#admin-section.visible { display: block; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.admin-header h2 { font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--white); }
+.admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 960px; margin: 0 auto 2rem; }
+.admin-stat { background: var(--bg3); border: 1px solid var(--border); padding: 1.25rem; text-align: center; }
+.admin-stat-num { font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold-light); display: block; }
+.admin-stat-lbl { font-size: 0.85rem; color: var(--text-dim); }
+.admin-table-wrap { max-width: 960px; margin: 0 auto; overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th {
+  font-family: 'Cinzel', serif; font-size: 0.75rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); text-align: left;
+  padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-strong);
+}
+.admin-table td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--border); font-size: 1rem; color: var(--text-dim); }
+.admin-table tr:hover td { background: rgba(186,117,23,0.04); }
+.admin-table .name { color: var(--white); }
+.export-btn { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 18px; background: transparent; color: var(--gold); border: 1px solid var(--border-strong); cursor: pointer; }
+.export-btn:hover { background: rgba(186,117,23,0.08); }
+.admin-nav-link { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; color: var(--text-dim); text-decoration: none; padding: 0 14px; height: 58px; display: flex; align-items: center; border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; cursor: pointer; }
+.admin-nav-link:hover { color: var(--gold-light); border-bottom-color: var(--gold); }
+
 </style>
 </head>
 <body>
@@ -417,7 +465,7 @@ footer {
     <a href="#ueber">Über uns</a>
     <a href="#turniere">Turniere</a>
     <a href="#galerie">Galerie</a>
-    <a href="#kontakt">Kontakt</a>
+    <a href="#kontakt">Kontakt</a><span class="admin-nav-link" onclick="openAdminLock()">Vorstand</span>
   </div>
   <button class="nav-burger" onclick="toggleNav()" aria-label="Menü">☰</button>
 </nav>
@@ -782,6 +830,113 @@ for (let i = 0; i < 12; i++) {
 }
 
 loadData();
+
+// ── ADMIN ──
+const ADMIN_PW = 'sorcery2025';
+
+function openAdminLock() {
+  document.getElementById('admin-lock').classList.add('open');
+  setTimeout(() => document.getElementById('admin-pw').focus(), 100);
+}
+function closeAdminLock() {
+  document.getElementById('admin-lock').classList.remove('open');
+  document.getElementById('admin-pw').value = '';
+  document.getElementById('admin-error').style.display = 'none';
+}
+function checkPw() {
+  const pw = document.getElementById('admin-pw').value;
+  if (pw === ADMIN_PW) {
+    closeAdminLock();
+    showAdmin();
+    sessionStorage.setItem('admin', '1');
+  } else {
+    document.getElementById('admin-error').style.display = 'block';
+    document.getElementById('admin-pw').value = '';
+  }
+}
+function showAdmin() {
+  document.getElementById('admin-section').classList.add('visible');
+  document.getElementById('admin-section').scrollIntoView({behavior:'smooth'});
+  loadAdminData();
+}
+function logoutAdmin() {
+  sessionStorage.removeItem('admin');
+  document.getElementById('admin-section').classList.remove('visible');
+}
+async function loadAdminData() {
+  const regs = await api('registrations?select=*&order=created_at');
+  const evts = await api('events?select=*');
+  const maxP = evts.reduce((s,e) => s + e.max_players, 0);
+  const total = regs.length;
+  const spots = maxP - total;
+  const pct = maxP ? Math.round((total/maxP)*100) : 0;
+  document.getElementById('a-total').textContent = total;
+  document.getElementById('a-spots').textContent = spots;
+  document.getElementById('a-pct').textContent = pct + '%';
+  const tbody = document.getElementById('admin-tbody');
+  if (!regs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim);padding:2rem">Noch keine Anmeldungen</td></tr>';
+    return;
+  }
+  tbody.innerHTML = regs.map((r,i) => {
+    const d = new Date(r.created_at);
+    const date = d.toLocaleDateString('de-CH') + ' ' + d.toLocaleTimeString('de-CH', {hour:'2-digit',minute:'2-digit'});
+    return `<tr><td style="color:var(--gold)">${i+1}</td><td class="name">${r.name}</td><td>${r.email}</td><td>${date}</td></tr>`;
+  }).join('');
+}
+function exportCSV() {
+  const rows = [['#','Name','E-Mail','Datum']];
+  document.querySelectorAll('#admin-tbody tr').forEach((tr,i) => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length === 4) rows.push([i+1, tds[1].textContent, tds[2].textContent, tds[3].textContent]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'anmeldungen-cedh.csv';
+  a.click();
+}
+if (sessionStorage.getItem('admin')) showAdmin();
+
 </script>
+
+<!-- ADMIN LOCK -->
+<div class="admin-lock" id="admin-lock">
+  <div class="admin-box">
+    <h2>⚔ Vorstand</h2>
+    <p>Nur für autorisierte Mitglieder</p>
+    <div class="admin-error" id="admin-error">Falsches Passwort</div>
+    <input type="password" id="admin-pw" placeholder="Passwort eingeben" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="btn-gold" style="width:100%" onclick="checkPw()">Einloggen</button>
+    <br><br>
+    <button class="btn-outline" style="font-size:11px;padding:6px 16px" onclick="closeAdminLock()">Abbrechen</button>
+  </div>
+</div>
+
+<!-- ADMIN SECTION -->
+<section id="admin-section">
+  <div class="section-inner">
+    <div class="admin-header">
+      <h2>⚔ Vorstand — Anmeldeliste</h2>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
+        <button class="export-btn" onclick="logoutAdmin()">Ausloggen</button>
+      </div>
+    </div>
+    <div class="admin-stats">
+      <div class="admin-stat"><span class="admin-stat-num" id="a-total">—</span><span class="admin-stat-lbl">Anmeldungen</span></div>
+      <div class="admin-stat"><span class="admin-stat-num" id="a-spots">—</span><span class="admin-stat-lbl">Freie Plätze</span></div>
+      <div class="admin-stat"><span class="admin-stat-num" id="a-pct">—</span><span class="admin-stat-lbl">Auslastung</span></div>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>#</th><th>Name</th><th>E-Mail</th><th>Angemeldet am</th></tr></thead>
+        <tbody id="admin-tbody"><tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim)">Lade Daten...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 </body>
 </html>
+<!-- VORSTAND SECTION PLACEHOLDER -->
