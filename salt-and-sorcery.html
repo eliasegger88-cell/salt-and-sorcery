@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salt and Sorcery</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #BA7517;
+  --gold-light: #EF9F27;
+  --gold-dim: #634006;
+  --bg: #0a0906;
+  --bg2: #111009;
+  --bg3: #181510;
+  --bg4: #1f1a12;
+  --border: rgba(186,117,23,0.2);
+  --border-strong: rgba(186,117,23,0.45);
+  --text: #e8dcc8;
+  --text-dim: #8a7a5e;
+  --text-muted: #4a4030;
+  --white: #f5ede0;
+  --red: #8b1a1a;
+  --blue: #1a3a6b;
+  --green: #1a4a1a;
+  --black: #0a0906;
+  --white-mana: #c8bfaa;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,9,6,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 58px;
+}
+.nav-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 15px; font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.08em;
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-logo .rune { font-size: 22px; }
+.nav-links { display: flex; gap: 0; }
+.nav-links a {
+  font-family: 'Cinzel', serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 0 14px; height: 58px;
+  display: flex; align-items: center;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--gold-light);
+  border-bottom-color: var(--gold);
+}
+.nav-burger { display: none; background: none; border: none; cursor: pointer; color: var(--gold); font-size: 22px; }
+
+/* ── HERO ── */
+#home {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  padding-top: 58px;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 60%, rgba(186,117,23,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 20% 80%, rgba(139,26,26,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 40% at 80% 20%, rgba(26,58,107,0.06) 0%, transparent 60%);
+}
+.mana-symbols {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.mana {
+  position: absolute;
+  font-size: 48px; opacity: 0.04;
+  animation: float linear infinite;
+}
+@keyframes float {
+  0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.04; }
+  90% { opacity: 0.04; }
+  100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+}
+.hero-content {
+  text-align: center; z-index: 1; padding: 2rem;
+  animation: fadeUp 1s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: 11px; letter-spacing: 0.3em;
+  color: var(--gold); text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 12px; justify-content: center;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  content: ''; flex: 1; max-width: 60px;
+  height: 1px; background: var(--border-strong);
+}
+.hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 700; line-height: 1.05;
+  color: var(--white);
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 60px rgba(186,117,23,0.3);
+}
+.hero-title span { color: var(--gold-light); }
+.hero-sub {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--gold-dim); letter-spacing: 0.2em;
+  margin-bottom: 1.5rem; text-transform: uppercase;
+  font-weight: 400;
+}
+.hero-desc {
+  font-size: 1.15rem; color: var(--text-dim);
+  max-width: 520px; margin: 0 auto 2.5rem;
+  line-height: 1.7; font-style: italic;
+}
+.hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-gold {
+  font-family: 'Cinzel', serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 13px 28px;
+  background: var(--gold);
+  color: var(--bg);
+  border: none; cursor: pointer;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  transition: all 0.2s; text-decoration: none; display: inline-block;
+}
+.btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btn-outline {
+  font-family: 'Cinzel', serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 12px 28px;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--border-strong);
+  cursor: pointer; transition: all 0.2s;
+  text-decoration: none; display: inline-block;
+}
+.btn-outline:hover { background: rgba(186,117,23,0.08); border-color: var(--gold); }
+
+.mana-row {
+  display: flex; gap: 16px; justify-content: center;
+  margin-top: 3rem;
+}
+.mana-pip {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+  border: 2px solid;
+  opacity: 0.6; transition: opacity 0.2s;
+}
+.mana-pip:hover { opacity: 1; }
+.mana-w { background: rgba(200,191,170,0.1); border-color: var(--white-mana); color: var(--white-mana); }
+.mana-u { background: rgba(26,58,107,0.3); border-color: #4a7bc4; color: #4a7bc4; }
+.mana-b { background: rgba(40,20,50,0.4); border-color: #9a6bc4; color: #9a6bc4; }
+.mana-r { background: rgba(139,26,26,0.3); border-color: #c44a4a; color: #c44a4a; }
+.mana-g { background: rgba(26,74,26,0.3); border-color: #4ab44a; color: #4ab44a; }
+
+/* ── SECTIONS ── */
+section { padding: 5rem 2rem; }
+.section-inner { max-width: 960px; margin: 0 auto; }
+.section-header { text-align: center; margin-bottom: 3rem; }
+.section-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 0.75rem;
+  display: flex; align-items: center; gap: 10px; justify-content: center;
+}
+.section-eyebrow::before, .section-eyebrow::after {
+  content: ''; width: 30px; height: 1px; background: var(--border-strong);
+}
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 600; color: var(--white);
+}
+.divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 1rem auto 0;
+}
+
+/* ── ABOUT ── */
+#ueber { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+.about-text p { font-size: 1.1rem; line-height: 1.8; color: var(--text-dim); margin-bottom: 1rem; }
+.about-text p:last-child { margin-bottom: 0; }
+.about-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.stat-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 1.25rem; text-align: center;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+.stat-num {
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem; font-weight: 700;
+  color: var(--gold-light); display: block;
+}
+.stat-lbl { font-size: 0.85rem; color: var(--text-dim); letter-spacing: 0.05em; }
+
+/* ── EVENTS ── */
+#events { background: var(--bg); }
+.event-grid { display: grid; gap: 1rem; }
+.event-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  padding: 1.25rem 1.5rem;
+  display: flex; align-items: center; gap: 1.5rem;
+  transition: all 0.2s; position: relative; overflow: hidden;
+}
+.event-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(186,117,23,0.05) 0%, transparent 40%);
+  pointer-events: none;
+}
+.event-card:hover { border-color: var(--gold-light); transform: translateX(3px); }
+.event-date-box {
+  text-align: center; min-width: 56px;
+  font-family: 'Cinzel', serif;
+}
+.event-day { font-size: 1.8rem; font-weight: 700; color: var(--gold-light); line-height: 1; }
+.event-month { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+.event-info { flex: 1; }
+.event-name { font-family: 'Cinzel', serif; font-size: 1.05rem; color: var(--white); margin-bottom: 4px; }
+.event-meta-row { font-size: 0.9rem; color: var(--text-dim); display: flex; gap: 12px; flex-wrap: wrap; }
+.event-format-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 10px; letter-spacing: 0.1em;
+  padding: 3px 10px;
+  border: 1px solid var(--border-strong);
+  color: var(--gold); text-transform: uppercase;
+}
+.event-spots { font-size: 0.85rem; color: var(--text-dim); text-align: right; white-space: nowrap; }
+.spots-num { font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--gold-light); display: block; }
+
+/* ── ANMELDUNG MODAL ── */
+.modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8); z-index: 200;
+  align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--bg3);
+  border: 1px solid var(--border-strong);
+  padding: 2rem; width: 100%; max-width: 400px;
+  position: relative;
+}
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-dim); font-size: 20px;
+}
+.modal h2 { font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--white); margin-bottom: 0.25rem; }
+.modal-event-name { font-size: 0.9rem; color: var(--gold); margin-bottom: 1.5rem; }
+.field { margin-bottom: 1rem; }
+.field label { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 6px; font-family: 'Cinzel', serif; }
+.field input {
+  width: 100%; padding: 10px 12px;
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text); font-size: 1rem; font-family: 'Crimson Pro', serif;
+  transition: border 0.2s;
+}
+.field input:focus { outline: none; border-color: var(--gold); }
+.modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
+.badge-status {
+  font-size: 11px; padding: 2px 10px;
+  font-family: 'Cinzel', serif; letter-spacing: 0.08em;
+}
+.badge-open { border: 1px solid #4ab44a; color: #4ab44a; }
+.badge-full { border: 1px solid #c44a4a; color: #c44a4a; }
+.badge-soon { border: 1px solid var(--gold); color: var(--gold); }
+
+/* ── TURNIER ── */
+#turniere { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.results-table { width: 100%; border-collapse: collapse; }
+.results-table th {
+  font-family: 'Cinzel', serif; font-size: 0.75rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+.results-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 1rem; color: var(--text-dim);
+}
+.results-table tr:last-child td { border-bottom: none; }
+.results-table tr:hover td { background: rgba(186,117,23,0.04); }
+.rank-gold { color: var(--gold-light); font-family: 'Cinzel', serif; font-weight: 600; }
+.rank-silver { color: var(--white-mana); font-family: 'Cinzel', serif; }
+.rank-bronze { color: #c47a4a; font-family: 'Cinzel', serif; }
+.player-name { color: var(--white); }
+
+/* ── GALERIE ── */
+#galerie { background: var(--bg); }
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.gallery-item {
+  aspect-ratio: 4/3;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; opacity: 0.4;
+  transition: all 0.2s; cursor: pointer;
+  position: relative; overflow: hidden;
+}
+.gallery-item:hover { opacity: 0.7; border-color: var(--gold); }
+.gallery-item span { position: relative; z-index: 1; }
+.gallery-placeholder { font-size: 0.75rem; color: var(--text-muted); position: absolute; bottom: 8px; font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+
+/* ── KONTAKT ── */
+#kontakt { background: var(--bg2); border-top: 1px solid var(--border); }
+.kontakt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+.kontakt-info h3 { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--white); margin-bottom: 1rem; }
+.kontakt-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 0.875rem; }
+.kontakt-icon { color: var(--gold); font-size: 1.1rem; margin-top: 2px; }
+.kontakt-text { font-size: 1rem; color: var(--text-dim); line-height: 1.5; }
+.kontakt-form h3 { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--white); margin-bottom: 1rem; }
+.form-field { margin-bottom: 0.875rem; }
+.form-field input, .form-field textarea {
+  width: 100%; padding: 10px 12px;
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text); font-size: 1rem; font-family: 'Crimson Pro', serif;
+  transition: border 0.2s; resize: none;
+}
+.form-field input:focus, .form-field textarea:focus { outline: none; border-color: var(--gold); }
+.form-field textarea { height: 90px; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem; letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--gold); color: var(--bg);
+  padding: 10px 22px; font-family: 'Cinzel', serif;
+  font-size: 12px; letter-spacing: 0.08em;
+  z-index: 999; transition: transform 0.3s;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 680px) {
+  .nav-links { display: none; }
+  .nav-burger { display: block; }
+  .nav-links.open {
+    display: flex; flex-direction: column;
+    position: fixed; top: 58px; left: 0; right: 0;
+    background: rgba(10,9,6,0.98);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
+  }
+  .nav-links.open a { height: 44px; padding: 0 1.5rem; }
+  .about-grid { grid-template-columns: 1fr; }
+  .kontakt-grid { grid-template-columns: 1fr; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .event-card { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <span class="rune">⚔</span>
+    Salt and Sorcery
+  </div>
+  <div class="nav-links" id="nav-links">
+    <a href="#home" class="active">Start</a>
+    <a href="#events">Events</a>
+    <a href="#ueber">Über uns</a>
+    <a href="#turniere">Turniere</a>
+    <a href="#galerie">Galerie</a>
+    <a href="#kontakt">Kontakt</a>
+  </div>
+  <button class="nav-burger" onclick="toggleNav()" aria-label="Menü">☰</button>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <div class="hero-bg"></div>
+  <div class="mana-symbols" id="mana-symbols"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Magic: The Gathering Verein</div>
+    <h1 class="hero-title">Salt and<br><span>Sorcery</span></h1>
+    <div class="hero-sub">Magic: The Gathering</div>
+    <p class="hero-desc">Willkommen in unserer Gemeinschaft leidenschaftlicher Planeswalker. Wir spielen, kämpfen und wachsen gemeinsam.</p>
+    <div class="hero-ctas">
+      <a href="#events" class="btn-gold">Events ansehen</a>
+      <a href="#ueber" class="btn-outline">Mehr erfahren</a>
+    </div>
+    <div class="mana-row">
+      <div class="mana-pip mana-w">W</div>
+      <div class="mana-pip mana-u">U</div>
+      <div class="mana-pip mana-b">B</div>
+      <div class="mana-pip mana-r">R</div>
+      <div class="mana-pip mana-g">G</div>
+    </div>
+  </div>
+</section>
+
+<!-- EVENTS / ANMELDUNG -->
+<section id="events">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Nächste Events</div>
+      <h2 class="section-title">Anmeldung & Termine</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="event-grid" id="event-grid">
+      <div style="text-align:center;color:var(--text-dim);padding:2rem;font-style:italic">Lade Events...</div>
+    </div>
+  </div>
+</section>
+
+<!-- ÜBER UNS -->
+<section id="ueber">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Unser Verein</div>
+      <h2 class="section-title">Über uns</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="about-grid">
+      <div class="about-text">
+        <p>Der Salt and Sorcery vereint Spieler aller Erfahrungsstufen — von neugierigen Einsteigern bis zu erfahrenen Turnierspielern. Unser Fokus liegt auf Commander, aber wir spielen alle Formate.</p>
+        <p>Wir treffen uns regelmässig zum gemeinsamen Spielen, organisieren lokale Turniere und pflegen eine freundschaftliche, offene Community in der Ostschweiz.</p>
+        <p>Ob du dein erstes Deck bauen möchtest oder im nächsten Turnier antreten willst — bei uns bist du willkommen.</p>
+      </div>
+      <div class="about-stats">
+        <div class="stat-box"><span class="stat-num">25+</span><span class="stat-lbl">Mitglieder</span></div>
+        <div class="stat-box"><span class="stat-num">—</span><span class="stat-lbl">Gegründet</span></div>
+        <div class="stat-box"><span class="stat-num">3x</span><span class="stat-lbl">Treffen/Woche</span></div>
+        <div class="stat-box"><span class="stat-num">12+</span><span class="stat-lbl">Turniere/Jahr</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TURNIERERGEBNISSE -->
+<section id="turniere">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Hall of Fame</div>
+      <h2 class="section-title">Turnierergebnisse</h2>
+      <div class="divider"></div>
+    </div>
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Spieler</th>
+          <th>Format</th>
+          <th>Turnier</th>
+          <th>Datum</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="rank-gold">🥇 1.</span></td>
+          <td class="player-name">Luca M.</td>
+          <td>Commander</td>
+          <td>Frühjahrsturnier 2025</td>
+          <td>März 2025</td>
+        </tr>
+        <tr>
+          <td><span class="rank-silver">🥈 2.</span></td>
+          <td class="player-name">Anna K.</td>
+          <td>Commander</td>
+          <td>Frühjahrsturnier 2025</td>
+          <td>März 2025</td>
+        </tr>
+        <tr>
+          <td><span class="rank-bronze">🥉 3.</span></td>
+          <td class="player-name">Marco B.</td>
+          <td>Commander</td>
+          <td>Frühjahrsturnier 2025</td>
+          <td>März 2025</td>
+        </tr>
+        <tr>
+          <td><span class="rank-gold">🥇 1.</span></td>
+          <td class="player-name">Felix H.</td>
+          <td>Modern</td>
+          <td>Winterturnier 2024</td>
+          <td>Dez. 2024</td>
+        </tr>
+        <tr>
+          <td><span class="rank-silver">🥈 2.</span></td>
+          <td class="player-name">Sara L.</td>
+          <td>Modern</td>
+          <td>Winterturnier 2024</td>
+          <td>Dez. 2024</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- GALERIE -->
+<section id="galerie">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Eindrücke</div>
+      <h2 class="section-title">Galerie</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="gallery-grid">
+      <div class="gallery-item"><span>🃏</span><span class="gallery-placeholder">Spielabend</span></div>
+      <div class="gallery-item"><span>⚔</span><span class="gallery-placeholder">Turnier</span></div>
+      <div class="gallery-item"><span>🏆</span><span class="gallery-placeholder">Sieger</span></div>
+      <div class="gallery-item"><span>🎴</span><span class="gallery-placeholder">Commander</span></div>
+      <div class="gallery-item"><span>🌟</span><span class="gallery-placeholder">Events</span></div>
+      <div class="gallery-item"><span>🤝</span><span class="gallery-placeholder">Community</span></div>
+    </div>
+    <p style="text-align:center;margin-top:1.5rem;font-size:0.9rem;color:var(--text-muted);font-style:italic">Fotos folgen bald — schick uns deine Bilder!</p>
+  </div>
+</section>
+
+<!-- KONTAKT -->
+<section id="kontakt">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Schreib uns</div>
+      <h2 class="section-title">Kontakt</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="kontakt-grid">
+      <div class="kontakt-info">
+        <h3>Findet uns hier</h3>
+        <div class="kontakt-row">
+          <span class="kontakt-icon">📍</span>
+          <span class="kontakt-text">Schweiz</span>
+        </div>
+        <div class="kontakt-row">
+          <span class="kontakt-icon">📧</span>
+          <span class="kontakt-text">info@salt-and-sorcery.ch</span>
+        </div>
+        <div class="kontakt-row">
+          <span class="kontakt-icon">💬</span>
+          <span class="kontakt-text">WhatsApp Gruppe für Mitglieder</span>
+        </div>
+        <div class="kontakt-row">
+          <span class="kontakt-icon">🕐</span>
+          <span class="kontakt-text">Treffen: 1–3× pro Woche<br>Details im Event-Kalender</span>
+        </div>
+      </div>
+      <div class="kontakt-form">
+        <h3>Nachricht senden</h3>
+        <div class="form-field"><input type="text" placeholder="Dein Name"></div>
+        <div class="form-field"><input type="email" placeholder="Deine E-Mail"></div>
+        <div class="form-field"><textarea placeholder="Deine Nachricht..."></textarea></div>
+        <button class="btn-gold" onclick="showToast('Nachricht gesendet — wir melden uns bald!')">Senden</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  © 2025 Salt and Sorcery · Alle Rechte vorbehalten · Magic: The Gathering ist ein Warenzeichen von Wizards of the Coast
+</footer>
+
+<!-- ANMELDUNG MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>Anmeldung</h2>
+    <div class="modal-event-name" id="modal-event-name"></div>
+    <div class="field"><label>Name</label><input type="text" id="input-name" placeholder="Max Mustermann"></div>
+    <div class="field"><label>E-Mail</label><input type="email" id="input-email" placeholder="max@beispiel.ch"></div>
+    <div class="modal-actions">
+      <button class="btn-gold" onclick="submitAnmeldung()" id="btn-submit">Anmelden</button>
+      <button class="btn-outline" onclick="closeModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://omzxlaiyizzktuoabivx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_OeHbLD5eAJVYRzWFmZJx0w_MN4PuBZJ';
+
+let allEvents = [], allRegs = [];
+let selectedEventId = null;
+let myRegs = {};
+try { myRegs = JSON.parse(localStorage.getItem('mtg_regs') || '{}'); } catch(e) {}
+
+async function api(path, opts = {}) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || ''
+    }, ...opts
+  });
+  if (opts.method === 'DELETE') return true;
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function loadData() {
+  try {
+    allEvents = await api('events?select=*&order=created_at');
+    allRegs = await api('registrations?select=*');
+    renderEvents();
+  } catch(e) {
+    document.getElementById('event-grid').innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:2rem;font-style:italic">Konnte Events nicht laden.</div>';
+  }
+}
+
+function getRegs(eid) { return allRegs.filter(r => r.event_id === eid); }
+
+function renderEvents() {
+  const el = document.getElementById('event-grid');
+  if (!allEvents.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:2rem;font-style:italic">Keine Events geplant.</div>'; return; }
+  el.innerHTML = allEvents.map(ev => {
+    const regs = getRegs(ev.id);
+    const count = regs.length;
+    const spots = ev.max_players - count;
+    const full = spots <= 0;
+    const nearly = spots <= 2 && spots > 0;
+    const myRegId = myRegs[ev.id];
+    const isMine = myRegId && regs.find(r => r.id === myRegId);
+    const badgeClass = full ? 'badge-full' : nearly ? 'badge-soon' : 'badge-open';
+    const badgeText = full ? 'Ausgebucht' : nearly ? `Nur noch ${spots} frei` : 'Anmeldung offen';
+    const dateParts = ev.date.split('. ');
+    const day = dateParts[0].replace(/\D/g,'');
+    const month = dateParts[1] || '';
+
+    return `<div class="event-card">
+      <div class="event-date-box">
+        <div class="event-day">${day}</div>
+        <div class="event-month">${month}</div>
+      </div>
+      <div class="event-info">
+        <div class="event-name">${ev.title}</div>
+        <div class="event-meta-row">
+          <span>${ev.time} Uhr</span>
+          <span class="event-format-badge">${ev.format}</span>
+          <span class="badge-status ${badgeClass}">${badgeText}</span>
+        </div>
+      </div>
+      <div class="event-spots">
+        <span class="spots-num">${count}/${ev.max_players}</span>
+        Spieler
+      </div>
+      <div>
+        ${isMine
+          ? `<button class="btn-outline" onclick="abmelden('${ev.id}','${myRegId}')">Abmelden</button>`
+          : full
+            ? `<button class="btn-outline" disabled style="opacity:0.4;cursor:not-allowed">Voll</button>`
+            : `<button class="btn-gold" onclick="openModal('${ev.id}','${ev.title}')">Anmelden</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openModal(id, title) {
+  selectedEventId = id;
+  document.getElementById('modal-event-name').textContent = title;
+  document.getElementById('input-name').value = '';
+  document.getElementById('input-email').value = '';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function submitAnmeldung() {
+  const name = document.getElementById('input-name').value.trim();
+  const email = document.getElementById('input-email').value.trim();
+  if (!name || !email) { showToast('Bitte Name und E-Mail eingeben'); return; }
+  const btn = document.getElementById('btn-submit');
+  btn.textContent = 'Speichere...'; btn.disabled = true;
+  try {
+    const result = await api('registrations?select=*', {
+      method: 'POST', prefer: 'return=representation',
+      body: JSON.stringify({ event_id: selectedEventId, name, email })
+    });
+    if (result && result[0]) {
+      myRegs[selectedEventId] = result[0].id;
+      try { localStorage.setItem('mtg_regs', JSON.stringify(myRegs)); } catch(e) {}
+      allRegs.push(result[0]);
+      closeModal(); renderEvents();
+      showToast('Erfolgreich angemeldet!');
+    }
+  } catch(e) { showToast('Fehler beim Speichern'); }
+  btn.textContent = 'Anmelden'; btn.disabled = false;
+}
+
+async function abmelden(eid, rid) {
+  await api('registrations?id=eq.' + rid, { method: 'DELETE' });
+  delete myRegs[eid];
+  try { localStorage.setItem('mtg_regs', JSON.stringify(myRegs)); } catch(e) {}
+  allRegs = allRegs.filter(r => r.id !== rid);
+  renderEvents(); showToast('Abgemeldet.');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function toggleNav() {
+  document.getElementById('nav-links').classList.toggle('open');
+}
+
+document.querySelectorAll('.nav-links a').forEach(a => {
+  a.addEventListener('click', () => document.getElementById('nav-links').classList.remove('open'));
+});
+
+window.addEventListener('scroll', () => {
+  const sections = ['home','events','ueber','turniere','galerie','kontakt'];
+  let current = 'home';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 80) current = id;
+  });
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+const manas = ['🔥','💧','🌿','💀','☀️','⚡','❄️','🌑','⚔'];
+const ms = document.getElementById('mana-symbols');
+for (let i = 0; i < 12; i++) {
+  const m = document.createElement('div');
+  m.className = 'mana';
+  m.textContent = manas[Math.floor(Math.random() * manas.length)];
+  m.style.left = Math.random() * 100 + '%';
+  m.style.animationDuration = (15 + Math.random() * 20) + 's';
+  m.style.animationDelay = (Math.random() * 15) + 's';
+  m.style.fontSize = (30 + Math.random() * 40) + 'px';
+  ms.appendChild(m);
+}
+
+loadData();
+</script>
+</body>
+</html>
