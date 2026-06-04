@@ -875,14 +875,31 @@ async function loadAdminData() {
   document.getElementById('a-pct').textContent = pct + '%';
   const tbody = document.getElementById('admin-tbody');
   if (!regs.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim);padding:2rem">Noch keine Anmeldungen</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;font-style:italic;color:var(--text-dim);padding:2rem">Noch keine Anmeldungen</td></tr>';
     return;
   }
-  tbody.innerHTML = regs.map((r,i) => {
-    const d = new Date(r.created_at);
-    const date = d.toLocaleDateString('de-CH') + ' ' + d.toLocaleTimeString('de-CH', {hour:'2-digit',minute:'2-digit'});
-    return `<tr><td style="color:var(--gold)">${i+1}</td><td class="name">${r.name}</td><td>${r.email}</td><td>${date}</td></tr>`;
-  }).join('');
+  // Group by event
+  const evtMap = {};
+  evts.forEach(e => evtMap[e.id] = e);
+  let rows = '';
+  let counter = 1;
+  // Group regs by event
+  const grouped = {};
+  regs.forEach(r => {
+    if (!grouped[r.event_id]) grouped[r.event_id] = [];
+    grouped[r.event_id].push(r);
+  });
+  Object.keys(grouped).forEach(eid => {
+    const ev = evtMap[eid];
+    const evName = ev ? ev.title + ' — ' + ev.date + ' ' + ev.time : 'Unbekannt';
+    rows += `<tr><td colspan="5" style="background:rgba(186,117,23,0.08);color:var(--gold);font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.6rem 1rem;">⚔ ${evName} (${grouped[eid].length} Anmeldungen)</td></tr>`;
+    grouped[eid].forEach(r => {
+      const d = new Date(r.created_at);
+      const date = d.toLocaleDateString('de-CH') + ' ' + d.toLocaleTimeString('de-CH', {hour:'2-digit',minute:'2-digit'});
+      rows += `<tr><td style="color:var(--gold)">${counter++}</td><td class="name">${r.name}</td><td>${r.email}</td><td>${evName.split('—')[0].trim()}</td><td>${date}</td></tr>`;
+    });
+  });
+  tbody.innerHTML = rows;
 }
 function exportCSV() {
   const rows = [['#','Name','E-Mail','Datum']];
@@ -930,7 +947,7 @@ if (sessionStorage.getItem('admin')) showAdmin();
     </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>#</th><th>Name</th><th>E-Mail</th><th>Angemeldet am</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>E-Mail</th><th>Event</th><th>Angemeldet am</th></tr></thead>
         <tbody id="admin-tbody"><tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim)">Lade Daten...</td></tr></tbody>
       </table>
     </div>
