@@ -923,18 +923,10 @@ async function sendKontakt() {
   const btn = document.getElementById('k-btn');
   btn.textContent = 'Sende...'; btn.disabled = true;
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://formspree.io/f/xpqezenp', {
       method: 'POST',
-      headers: {
-        'Authorization': 'Bearer re_QgFo3ohC_MnBvAv2X5oLcYoeWX81LMhoN',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to: 'saltandsorcerymtg@gmail.com',
-        subject: 'Salt and Sorcery — Kontaktanfrage von ' + name,
-        html: '<h2>Neue Nachricht über die Webseite</h2><p><strong>Name:</strong> ' + name + '</p><p><strong>E-Mail:</strong> ' + email + '</p><p><strong>Nachricht:</strong></p><p>' + msg.replace(/\n/g,'<br>') + '</p>'
-      })
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name, email, message: msg })
     });
     if (res.ok) {
       showToast('Nachricht gesendet — wir melden uns bald!');
