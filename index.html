@@ -640,10 +640,10 @@ footer {
       </div>
       <div class="kontakt-form">
         <h3>Nachricht senden</h3>
-        <div class="form-field"><input type="text" placeholder="Dein Name"></div>
-        <div class="form-field"><input type="email" placeholder="Deine E-Mail"></div>
-        <div class="form-field"><textarea placeholder="Deine Nachricht..."></textarea></div>
-        <button class="btn-gold" onclick="showToast('Nachricht gesendet — wir melden uns bald!')">Senden</button>
+        <div class="form-field"><input type="text" id="k-name" placeholder="Dein Name"></div>
+        <div class="form-field"><input type="email" id="k-email" placeholder="Deine E-Mail"></div>
+        <div class="form-field"><textarea id="k-msg" placeholder="Deine Nachricht..."></textarea></div>
+        <button class="btn-gold" id="k-btn" onclick="sendKontakt()">Senden</button>
       </div>
     </div>
   </div>
@@ -914,6 +914,39 @@ function exportCSV() {
   a.click();
 }
 if (sessionStorage.getItem('admin')) showAdmin();
+
+async function sendKontakt() {
+  const name = document.getElementById('k-name').value.trim();
+  const email = document.getElementById('k-email').value.trim();
+  const msg = document.getElementById('k-msg').value.trim();
+  if (!name || !email || !msg) { showToast('Bitte alle Felder ausfüllen'); return; }
+  const btn = document.getElementById('k-btn');
+  btn.textContent = 'Sende...'; btn.disabled = true;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer re_QgFo3ohC_MnBvAv2X5oLcYoeWX81LMhoN',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: 'saltandsorcerymtg@gmail.com',
+        subject: 'Salt and Sorcery — Kontaktanfrage von ' + name,
+        html: '<h2>Neue Nachricht über die Webseite</h2><p><strong>Name:</strong> ' + name + '</p><p><strong>E-Mail:</strong> ' + email + '</p><p><strong>Nachricht:</strong></p><p>' + msg.replace(/\n/g,'<br>') + '</p>'
+      })
+    });
+    if (res.ok) {
+      showToast('Nachricht gesendet — wir melden uns bald!');
+      document.getElementById('k-name').value = '';
+      document.getElementById('k-email').value = '';
+      document.getElementById('k-msg').value = '';
+    } else {
+      showToast('Fehler beim Senden — bitte direkt mailen');
+    }
+  } catch(e) { showToast('Fehler beim Senden'); }
+  btn.textContent = 'Senden'; btn.disabled = false;
+}
 
 </script>
 
