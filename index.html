@@ -695,7 +695,7 @@ async function api(path, opts = {}) {
 
 async function loadData() {
   try {
-    allEvents = await api('events?select=*&order=created_at');
+    allEvents = await api('events?select=*,eintritt&order=created_at');
     allRegs = await api('registrations?select=*');
     renderEvents();
   } catch(e) {
@@ -732,6 +732,7 @@ function renderEvents() {
         <div class="event-meta-row">
           <span>${ev.time} Uhr</span>
           <span class="event-format-badge">${ev.format}</span>
+          ${ev.eintritt ? `<span style="color:var(--gold);font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.08em">✦ Eintritt ${ev.eintritt}</span>` : ''}
           <span class="badge-status ${badgeClass}">${badgeText}</span>
         </div>
       </div>
