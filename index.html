@@ -794,6 +794,7 @@ async function api(path, opts = {}) {
     return true;
   }
   const text = await res.text();
+  if (!res.ok) { throw new Error('API ' + res.status + ' bei ' + path + ': ' + text); }
   return text ? JSON.parse(text) : [];
 }
 
@@ -1110,17 +1111,22 @@ async function adminDeleteReg(rid) {
 }
 
 async function loadMembers() {
-  const members = await api('profiles?select=*&order=display_name');
-  const tbody = document.getElementById('members-tbody');
-  if (!members.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim);padding:1rem">Keine Mitglieder</td></tr>';
-    return;
+  try {
+    const members = await api('profiles?select=*&order=display_name');
+    const tbody = document.getElementById('members-tbody');
+    if (!members.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim);padding:1rem">Keine Mitglieder</td></tr>';
+      return;
+    }
+    tbody.innerHTML = members.map(m => {
+      const isVorstand = m.role === 'vorstand';
+      const canTrade = !!m.trading_allowed;
+      return `<tr><td class="name">${m.display_name || '—'}</td><td>${isVorstand ? '⚔ Vorstand' : 'Mitglied'}</td><td>${canTrade ? '🃏 Ja' : 'Nein'}</td><td style="display:flex;gap:6px;flex-wrap:wrap"><button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="toggleVorstand('${m.id}', ${!isVorstand})">${isVorstand ? 'Vorstand entfernen' : 'Zum Vorstand machen'}</button><button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="toggleTrading('${m.id}', ${!canTrade})">${canTrade ? 'Handel entziehen' : 'Handel erlauben'}</button></td></tr>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('members-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim);padding:1rem">Konnte Mitglieder nicht laden.</td></tr>';
+    showDebugError('loadMembers: ' + e.message);
   }
-  tbody.innerHTML = members.map(m => {
-    const isVorstand = m.role === 'vorstand';
-    const canTrade = !!m.trading_allowed;
-    return `<tr><td class="name">${m.display_name || '—'}</td><td>${isVorstand ? '⚔ Vorstand' : 'Mitglied'}</td><td>${canTrade ? '🃏 Ja' : 'Nein'}</td><td style="display:flex;gap:6px;flex-wrap:wrap"><button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="toggleVorstand('${m.id}', ${!isVorstand})">${isVorstand ? 'Vorstand entfernen' : 'Zum Vorstand machen'}</button><button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="toggleTrading('${m.id}', ${!canTrade})">${canTrade ? 'Handel entziehen' : 'Handel erlauben'}</button></td></tr>`;
-  }).join('');
 }
 
 async function toggleVorstand(uid, makeVorstand) {
@@ -1208,6 +1214,7 @@ async function deleteTrade(id) {
   }
 }
 async function loadAdminData() {
+ try {
   const regs = await api('registrations?select=*&order=created_at');
   const evts = await api('events?select=*');
   const maxP = evts.reduce((s,e) => s + e.max_players, 0);
@@ -1244,6 +1251,10 @@ async function loadAdminData() {
     });
   });
   tbody.innerHTML = rows;
+ } catch(e) {
+  document.getElementById('admin-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;font-style:italic;color:var(--text-dim);padding:2rem">Konnte Daten nicht laden.</td></tr>';
+  showDebugError('loadAdminData: ' + e.message);
+ }
 }
 function exportCSV() {
   const rows = [['#','Name','E-Mail','Datum']];
