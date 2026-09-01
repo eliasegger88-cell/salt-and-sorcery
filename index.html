@@ -815,8 +815,25 @@ async function loadData() {
     renderEvents();
   } catch(e) {
     document.getElementById('event-grid').innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:2rem;font-style:italic">Konnte Events nicht laden.</div>';
+    showDebugError('loadData: ' + e.message);
   }
 }
+
+function showDebugError(msg) {
+  let bar = document.getElementById('debug-error-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'debug-error-bar';
+    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c44a4a;color:#fff;font-family:monospace;font-size:12px;padding:10px 14px;word-break:break-word;max-height:40vh;overflow-y:auto;';
+    document.body.prepend(bar);
+  }
+  const line = document.createElement('div');
+  line.style.cssText = 'margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.3);padding-bottom:4px;';
+  line.textContent = new Date().toLocaleTimeString('de-CH') + ' — ' + msg;
+  bar.appendChild(line);
+}
+window.addEventListener('error', (e) => showDebugError('JS-Fehler: ' + e.message + ' (Zeile ' + e.lineno + ')'));
+window.addEventListener('unhandledrejection', (e) => showDebugError('Promise-Fehler: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)));
 
 // ── AUTH / KONTO ──
 async function initAuth() {
@@ -898,6 +915,7 @@ async function submitAuth() {
     }
   } catch(e) {
     errEl.textContent = /invalid/i.test(e.message) ? 'E-Mail oder Passwort falsch' : e.message;
+    showDebugError('submitAuth: ' + e.message);
     errEl.style.display = 'block';
   }
   btn.disabled = false;
