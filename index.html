@@ -463,6 +463,28 @@ footer {
   border-top: 1px solid var(--border); display: none;
 }
 #handel-section.visible { display: block; }
+.page-overlay {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: var(--bg); overflow-y: auto;
+}
+.page-overlay.open { display: block; }
+.page-header {
+  position: sticky; top: 0; z-index: 5;
+  background: rgba(10,9,6,0.96); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.5rem; flex-wrap: wrap;
+}
+.page-header-title { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--white); }
+.page-body { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.trade-search-wrap { margin-bottom: 1.5rem; }
+.trade-search-wrap input {
+  width: 100%; padding: 12px 14px;
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text); font-size: 1rem; font-family: 'Crimson Pro', serif;
+}
+.trade-search-wrap input:focus { outline: none; border-color: var(--gold); }
+.trade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
 .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
 .admin-header h2 { font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--white); }
 .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 960px; margin: 0 auto 2rem; }
@@ -504,9 +526,9 @@ footer {
 .profile-reg-item .meta { color: var(--text-dim); font-size: 0.8rem; }
 .profile-reg-empty { color: var(--text-dim); font-style: italic; font-size: 0.9rem; padding: 0.75rem 0; }
 .field-static { padding: 10px 12px; background: var(--bg4); border: 1px solid var(--border); color: var(--text-dim); font-size: 1rem; }
-.trade-card { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 1.1rem 1.4rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
-.trade-card .tc-name { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--white); margin-bottom: 4px; }
-.trade-card .tc-desc { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 6px; }
+.trade-card { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 1.1rem 1.3rem; display:flex; flex-direction:column; gap:8px; }
+.trade-card .tc-name { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--white); }
+.trade-card .tc-desc { font-size: 0.9rem; color: var(--text-dim); }
 .trade-card .tc-meta { font-size: 0.8rem; color: var(--gold); }
 
 </style>
@@ -1145,31 +1167,48 @@ async function toggleTrading(uid, allow) {
 }
 
 // ── HANDEL ──
+let allTrades = [];
+
 function checkTradingAccess() {
   if (!currentUser) { openAuthModal(); showToast('Bitte zuerst anmelden'); return; }
   if (currentProfile && (currentProfile.trading_allowed || currentProfile.role === 'vorstand')) {
-    document.getElementById('handel-section').classList.add('visible');
-    document.getElementById('handel-section').scrollIntoView({behavior:'smooth'});
+    document.getElementById('handel-page').classList.add('open');
+    document.body.style.overflow = 'hidden';
     loadTrades();
   } else {
     showToast('Kein Zugriff — dieses Recht wird vom Vorstand vergeben');
   }
 }
+function closeTradingPage() {
+  document.getElementById('handel-page').classList.remove('open');
+  document.body.style.overflow = '';
+}
 
 async function loadTrades() {
   const el = document.getElementById('trade-grid');
   try {
-    const listings = await api('trade_listings?select=*&order=created_at.desc');
-    if (!listings.length) { el.innerHTML = '<div style="color:var(--text-dim);font-style:italic;padding:1rem">Noch keine Angebote.</div>'; return; }
-    el.innerHTML = listings.map(t => {
-      const mine = currentUser && t.user_id === currentUser.id;
-      const isVorstand = currentProfile && currentProfile.role === 'vorstand';
-      const del = (mine || isVorstand) ? `<button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="deleteTrade('${t.id}')">Löschen</button>` : '';
-      return `<div class="trade-card"><div><div class="tc-name">${t.card_name}</div><div class="tc-desc">${t.description || ''}</div><div class="tc-meta">von ${t.seller_name || 'Mitglied'} · Kontakt: ${t.contact}</div></div>${del}</div>`;
-    }).join('');
+    allTrades = await api('trade_listings?select=*&order=created_at.desc');
+    renderTrades();
   } catch(e) {
     el.innerHTML = '<div style="color:var(--text-dim);font-style:italic;padding:1rem">Konnte Angebote nicht laden.</div>';
+    showDebugError('loadTrades: ' + e.message);
   }
+}
+
+function renderTrades() {
+  const el = document.getElementById('trade-grid');
+  const q = (document.getElementById('trade-search').value || '').trim().toLowerCase();
+  const filtered = q ? allTrades.filter(t => (t.card_name || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q)) : allTrades;
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-style:italic;padding:1rem">' + (allTrades.length ? 'Keine Treffer.' : 'Noch keine Angebote.') + '</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(t => {
+    const mine = currentUser && t.user_id === currentUser.id;
+    const isVorstand = currentProfile && currentProfile.role === 'vorstand';
+    const del = (mine || isVorstand) ? `<button class="export-btn" style="padding:5px 12px;font-size:10px;align-self:flex-start" onclick="deleteTrade('${t.id}')">Löschen</button>` : '';
+    return `<div class="trade-card"><div class="tc-name">${t.card_name}</div><div class="tc-desc">${t.description || ''}</div><div class="tc-meta">von ${t.seller_name || 'Mitglied'} · Kontakt: ${t.contact}</div>${del}</div>`;
+  }).join('');
 }
 
 function openTradeModal() {
@@ -1295,19 +1334,23 @@ async function sendKontakt() {
 
 </script>
 
-<!-- HANDEL SECTION -->
-<section id="handel-section">
-  <div class="section-inner">
-    <div class="admin-header">
-      <h2>🃏 Handel — Karten anbieten & tauschen</h2>
-      <button class="btn-gold" onclick="openTradeModal()">Karte anbieten</button>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border-strong);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:2rem;font-size:0.9rem;color:var(--text-dim);line-height:1.6">
+<!-- HANDEL PAGE (Vollbild-Overlay) -->
+<div class="page-overlay" id="handel-page">
+  <div class="page-header">
+    <button class="btn-outline" style="padding:8px 16px;font-size:11px" onclick="closeTradingPage()">← Zurück</button>
+    <div class="page-header-title">🃏 Handel</div>
+    <button class="btn-gold" style="padding:8px 16px;font-size:11px" onclick="openTradeModal()">+ Karte anbieten</button>
+  </div>
+  <div class="page-body">
+    <div style="background:var(--bg3);border:1px solid var(--border-strong);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.9rem;color:var(--text-dim);line-height:1.6">
       Salt and Sorcery vermittelt hier nur den <strong style="color:var(--text)">Kontakt</strong> zwischen Vereinsmitgliedern. Der Verein ist an keinem Trade beteiligt, prüft die Angebote nicht und übernimmt keine Haftung für Absprachen, Zustand der Karten oder den Ablauf des Tauschs. Alles Weitere — Treffen, Bezahlung, Versand — regelt ihr direkt untereinander.
     </div>
-    <div id="trade-grid" style="display:grid;gap:1rem"></div>
+    <div class="trade-search-wrap">
+      <input type="text" id="trade-search" placeholder="Karte suchen..." oninput="renderTrades()">
+    </div>
+    <div id="trade-grid" class="trade-grid"></div>
   </div>
-</section>
+</div>
 
 <!-- HANDEL MODAL -->
 <div class="modal-bg" id="trade-modal">
