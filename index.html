@@ -458,6 +458,11 @@ footer {
   border-top: 1px solid var(--border); display: none;
 }
 #admin-section.visible { display: block; }
+#handel-section {
+  padding: 5rem 2rem; background: var(--bg2);
+  border-top: 1px solid var(--border); display: none;
+}
+#handel-section.visible { display: block; }
 .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
 .admin-header h2 { font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--white); }
 .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 960px; margin: 0 auto 2rem; }
@@ -499,6 +504,10 @@ footer {
 .profile-reg-item .meta { color: var(--text-dim); font-size: 0.8rem; }
 .profile-reg-empty { color: var(--text-dim); font-style: italic; font-size: 0.9rem; padding: 0.75rem 0; }
 .field-static { padding: 10px 12px; background: var(--bg4); border: 1px solid var(--border); color: var(--text-dim); font-size: 1rem; }
+.trade-card { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 1.1rem 1.4rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+.trade-card .tc-name { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--white); margin-bottom: 4px; }
+.trade-card .tc-desc { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 6px; }
+.trade-card .tc-meta { font-size: 0.8rem; color: var(--gold); }
 
 </style>
 </head>
@@ -515,7 +524,7 @@ footer {
     <a href="#ueber">Über uns</a>
     <a href="#turniere">Turniere</a>
     <a href="#galerie">Galerie</a>
-    <a href="#kontakt">Kontakt</a><span class="admin-nav-link" onclick="checkVorstandAccess()">Vorstand</span><span class="admin-nav-link" id="nav-account" onclick="openAccountArea()">Anmelden</span>
+    <a href="#kontakt">Kontakt</a><span class="admin-nav-link" onclick="checkTradingAccess()">Handel</span><span class="admin-nav-link" onclick="checkVorstandAccess()">Vorstand</span><span class="admin-nav-link" id="nav-account" onclick="openAccountArea()">Anmelden</span>
   </div>
   <button class="nav-burger" onclick="toggleNav()" aria-label="Menü">☰</button>
 </nav>
@@ -675,8 +684,25 @@ footer {
 </section>
 
 <footer>
-  © 2025 Salt and Sorcery · Alle Rechte vorbehalten · Magic: The Gathering ist ein Warenzeichen von Wizards of the Coast
+  © 2025 Salt and Sorcery · Alle Rechte vorbehalten · Magic: The Gathering ist ein Warenzeichen von Wizards of the Coast<br>
+  <span style="text-decoration:underline;cursor:pointer" onclick="document.getElementById('privacy-modal').classList.add('open')">Datenschutzerklärung</span>
 </footer>
+
+<!-- DATENSCHUTZ MODAL -->
+<div class="modal-bg" id="privacy-modal">
+  <div class="modal" style="max-width:560px;max-height:80vh;overflow-y:auto">
+    <button class="modal-close" onclick="document.getElementById('privacy-modal').classList.remove('open')">✕</button>
+    <h2>Datenschutzerklärung</h2>
+    <div style="font-size:0.9rem;color:var(--text-dim);line-height:1.7;margin-top:1rem">
+      <p style="margin-bottom:1rem"><strong style="color:var(--text)">Verantwortlich:</strong> Salt and Sorcery, saltandsorcerymtg@gmail.com</p>
+      <p style="margin-bottom:1rem"><strong style="color:var(--text)">Welche Daten wir speichern:</strong> Bei der Registrierung speichern wir deine E-Mail-Adresse und deinen Anzeigenamen. Bei Event-Anmeldungen speichern wir zusätzlich, für welche Events du dich angemeldet hast. Wenn du die Handel-Seite nutzt, speichern wir deine Angebote inkl. der von dir angegebenen Kontaktinformationen. Beim Kontaktformular werden Name, E-Mail und Nachricht an unser Postfach übermittelt.</p>
+      <p style="margin-bottom:1rem"><strong style="color:var(--text)">Zweck:</strong> Diese Daten dienen ausschliesslich der Vereinsorganisation — Event-Anmeldungen, Mitgliederverwaltung und der Vermittlung von Kartentauschs unter Mitgliedern.</p>
+      <p style="margin-bottom:1rem"><strong style="color:var(--text)">Weitergabe:</strong> Deine Daten werden nicht an Dritte verkauft. Zur technischen Bereitstellung nutzen wir die Dienstleister Supabase (Datenbank/Login), Vercel (Hosting) und Formspree (Kontaktformular) als Auftragsverarbeiter.</p>
+      <p style="margin-bottom:1rem"><strong style="color:var(--text)">Speicherdauer:</strong> Deine Daten bleiben gespeichert, solange dein Konto besteht.</p>
+      <p><strong style="color:var(--text)">Deine Rechte:</strong> Du kannst jederzeit Auskunft, Berichtigung oder Löschung deiner Daten verlangen — schreib uns einfach an saltandsorcerymtg@gmail.com.</p>
+    </div>
+  </div>
+</div>
 
 <!-- ANMELDUNG MODAL -->
 <div class="modal-bg" id="modal">
@@ -1069,12 +1095,13 @@ async function loadMembers() {
   const members = await api('profiles?select=*&order=display_name');
   const tbody = document.getElementById('members-tbody');
   if (!members.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;font-style:italic;color:var(--text-dim);padding:1rem">Keine Mitglieder</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim);padding:1rem">Keine Mitglieder</td></tr>';
     return;
   }
   tbody.innerHTML = members.map(m => {
     const isVorstand = m.role === 'vorstand';
-    return `<tr><td class="name">${m.display_name || '—'}</td><td>${isVorstand ? '⚔ Vorstand' : 'Mitglied'}</td><td><button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="toggleVorstand('${m.id}', ${!isVorstand})">${isVorstand ? 'Vorstand entfernen' : 'Zum Vorstand machen'}</button></td></tr>`;
+    const canTrade = !!m.trading_allowed;
+    return `<tr><td class="name">${m.display_name || '—'}</td><td>${isVorstand ? '⚔ Vorstand' : 'Mitglied'}</td><td>${canTrade ? '🃏 Ja' : 'Nein'}</td><td style="display:flex;gap:6px;flex-wrap:wrap"><button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="toggleVorstand('${m.id}', ${!isVorstand})">${isVorstand ? 'Vorstand entfernen' : 'Zum Vorstand machen'}</button><button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="toggleTrading('${m.id}', ${!canTrade})">${canTrade ? 'Handel entziehen' : 'Handel erlauben'}</button></td></tr>`;
   }).join('');
 }
 
@@ -1085,6 +1112,82 @@ async function toggleVorstand(uid, makeVorstand) {
   await api('profiles?id=eq.' + uid, { method: 'PATCH', body: JSON.stringify({ role: makeVorstand ? 'vorstand' : 'member' }) });
   loadMembers();
   showToast(makeVorstand ? 'Zum Vorstand gemacht.' : 'Vorstand-Rechte entfernt.');
+}
+
+async function toggleTrading(uid, allow) {
+  await api('profiles?id=eq.' + uid, { method: 'PATCH', body: JSON.stringify({ trading_allowed: allow }) });
+  loadMembers();
+  showToast(allow ? 'Handel-Recht vergeben.' : 'Handel-Recht entzogen.');
+}
+
+// ── HANDEL ──
+function checkTradingAccess() {
+  if (!currentUser) { openAuthModal(); showToast('Bitte zuerst anmelden'); return; }
+  if (currentProfile && (currentProfile.trading_allowed || currentProfile.role === 'vorstand')) {
+    document.getElementById('handel-section').classList.add('visible');
+    document.getElementById('handel-section').scrollIntoView({behavior:'smooth'});
+    loadTrades();
+  } else {
+    showToast('Kein Zugriff — dieses Recht wird vom Vorstand vergeben');
+  }
+}
+
+async function loadTrades() {
+  const el = document.getElementById('trade-grid');
+  try {
+    const listings = await api('trade_listings?select=*&order=created_at.desc');
+    if (!listings.length) { el.innerHTML = '<div style="color:var(--text-dim);font-style:italic;padding:1rem">Noch keine Angebote.</div>'; return; }
+    el.innerHTML = listings.map(t => {
+      const mine = currentUser && t.user_id === currentUser.id;
+      const isVorstand = currentProfile && currentProfile.role === 'vorstand';
+      const del = (mine || isVorstand) ? `<button class="export-btn" style="padding:5px 12px;font-size:10px" onclick="deleteTrade('${t.id}')">Löschen</button>` : '';
+      return `<div class="trade-card"><div><div class="tc-name">${t.card_name}</div><div class="tc-desc">${t.description || ''}</div><div class="tc-meta">von ${t.seller_name || 'Mitglied'} · Kontakt: ${t.contact}</div></div>${del}</div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-style:italic;padding:1rem">Konnte Angebote nicht laden.</div>';
+  }
+}
+
+function openTradeModal() {
+  if (!currentUser) { openAuthModal(); showToast('Bitte zuerst anmelden'); return; }
+  if (!(currentProfile.trading_allowed || currentProfile.role === 'vorstand')) { showToast('Kein Zugriff — dieses Recht wird vom Vorstand vergeben'); return; }
+  document.getElementById('trade-card').value = '';
+  document.getElementById('trade-desc').value = '';
+  document.getElementById('trade-contact').value = '';
+  document.getElementById('trade-modal').classList.add('open');
+}
+function closeTradeModal() { document.getElementById('trade-modal').classList.remove('open'); }
+
+async function submitTrade() {
+  const card_name = document.getElementById('trade-card').value.trim();
+  const description = document.getElementById('trade-desc').value.trim();
+  const contact = document.getElementById('trade-contact').value.trim();
+  if (!card_name || !contact) { showToast('Bitte Karte und Kontakt angeben'); return; }
+  const btn = document.getElementById('trade-btn');
+  btn.disabled = true; btn.textContent = 'Speichere...';
+  try {
+    await api('trade_listings', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: currentUser.id, seller_name: currentProfile.display_name, card_name, description, contact })
+    });
+    closeTradeModal();
+    loadTrades();
+    showToast('Karte gepostet!');
+  } catch(e) {
+    showToast('Fehler beim Posten');
+  }
+  btn.disabled = false; btn.textContent = 'Posten';
+}
+
+async function deleteTrade(id) {
+  if (!confirm('Angebot wirklich löschen?')) return;
+  try {
+    await api('trade_listings?id=eq.' + id, { method: 'DELETE' });
+    loadTrades();
+    showToast('Angebot gelöscht.');
+  } catch(e) {
+    showToast('Fehler: Löschen nicht erlaubt.');
+  }
 }
 async function loadAdminData() {
   const regs = await api('registrations?select=*&order=created_at');
@@ -1163,6 +1266,35 @@ async function sendKontakt() {
 
 </script>
 
+<!-- HANDEL SECTION -->
+<section id="handel-section">
+  <div class="section-inner">
+    <div class="admin-header">
+      <h2>🃏 Handel — Karten anbieten & tauschen</h2>
+      <button class="btn-gold" onclick="openTradeModal()">Karte anbieten</button>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border-strong);border-left:3px solid var(--gold);padding:1rem 1.25rem;margin-bottom:2rem;font-size:0.9rem;color:var(--text-dim);line-height:1.6">
+      Salt and Sorcery vermittelt hier nur den <strong style="color:var(--text)">Kontakt</strong> zwischen Vereinsmitgliedern. Der Verein ist an keinem Trade beteiligt, prüft die Angebote nicht und übernimmt keine Haftung für Absprachen, Zustand der Karten oder den Ablauf des Tauschs. Alles Weitere — Treffen, Bezahlung, Versand — regelt ihr direkt untereinander.
+    </div>
+    <div id="trade-grid" style="display:grid;gap:1rem"></div>
+  </div>
+</section>
+
+<!-- HANDEL MODAL -->
+<div class="modal-bg" id="trade-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeTradeModal()">✕</button>
+    <h2>Karte anbieten</h2>
+    <div class="field"><label>Karte</label><input type="text" id="trade-card" placeholder="z.B. Sol Ring (Foil)"></div>
+    <div class="field"><label>Beschreibung / Zustand</label><input type="text" id="trade-desc" placeholder="z.B. Near Mint, suche Gegenwert ~10.-"></div>
+    <div class="field"><label>Kontakt</label><input type="text" id="trade-contact" placeholder="z.B. WhatsApp, Discord..."></div>
+    <div class="modal-actions">
+      <button class="btn-gold" onclick="submitTrade()" id="trade-btn">Posten</button>
+      <button class="btn-outline" onclick="closeTradeModal()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADMIN SECTION -->
 <section id="admin-section">
   <div class="section-inner">
@@ -1190,8 +1322,8 @@ async function sendKontakt() {
     </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Name</th><th>Rolle</th><th></th></tr></thead>
-        <tbody id="members-tbody"><tr><td colspan="3" style="text-align:center;font-style:italic;color:var(--text-dim)">Lade Daten...</td></tr></tbody>
+        <thead><tr><th>Name</th><th>Rolle</th><th>Handel</th><th></th></tr></thead>
+        <tbody id="members-tbody"><tr><td colspan="4" style="text-align:center;font-style:italic;color:var(--text-dim)">Lade Daten...</td></tr></tbody>
       </table>
     </div>
   </div>
