@@ -763,7 +763,10 @@ async function api(path, opts = {}) {
       'Prefer': opts.prefer || ''
     }, ...opts
   });
-  if (opts.method === 'DELETE') return true;
+  if (opts.method === 'DELETE') {
+    if (!res.ok) { const t = await res.text(); throw new Error('DELETE fehlgeschlagen (' + res.status + '): ' + t); }
+    return true;
+  }
   const text = await res.text();
   return text ? JSON.parse(text) : [];
 }
@@ -976,11 +979,16 @@ async function submitAnmeldung() {
 }
 
 async function abmelden(eid, rid) {
-  await api('registrations?id=eq.' + rid, { method: 'DELETE' });
-  allRegs = allRegs.filter(r => r.id !== rid);
-  renderEvents();
-  if (document.getElementById('profile-modal').classList.contains('open')) openProfileModal();
-  showToast('Abgemeldet.');
+  try {
+    await api('registrations?id=eq.' + rid, { method: 'DELETE' });
+    allRegs = allRegs.filter(r => r.id !== rid);
+    renderEvents();
+    if (document.getElementById('profile-modal').classList.contains('open')) openProfileModal();
+    showToast('Abgemeldet.');
+  } catch(e) {
+    showToast('Fehler beim Abmelden.');
+    console.error(e);
+  }
 }
 
 function showToast(msg) {
@@ -1045,11 +1053,16 @@ function logoutAdmin() {
 }
 async function adminDeleteReg(rid) {
   if (!confirm('Diese Anmeldung wirklich löschen?')) return;
-  await api('registrations?id=eq.' + rid, { method: 'DELETE' });
-  allRegs = allRegs.filter(r => r.id !== rid);
-  loadAdminData();
-  renderEvents();
-  showToast('Anmeldung gelöscht.');
+  try {
+    await api('registrations?id=eq.' + rid, { method: 'DELETE' });
+    allRegs = allRegs.filter(r => r.id !== rid);
+    loadAdminData();
+    renderEvents();
+    showToast('Anmeldung gelöscht.');
+  } catch(e) {
+    showToast('Fehler: Löschen nicht erlaubt.');
+    console.error(e);
+  }
 }
 
 async function loadMembers() {
