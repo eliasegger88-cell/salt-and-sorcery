@@ -765,8 +765,15 @@ footer {
   <div class="modal">
     <button class="modal-close" onclick="closeProfileModal()">✕</button>
     <h2>Mein Profil</h2>
+    <div class="field">
+      <label>Name</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="p-name-input" style="flex:1">
+        <button class="btn-outline" style="padding:0 16px;font-size:11px" onclick="saveDisplayName()">Speichern</button>
+      </div>
+      <div class="auth-error" id="name-error" style="margin-top:6px"></div>
+    </div>
     <div class="profile-info">
-      <div class="profile-info-row"><span>Name</span><span id="p-name">—</span></div>
       <div class="profile-info-row"><span>E-Mail</span><span id="p-email">—</span></div>
     </div>
     <div class="profile-regs-title">Meine Anmeldungen</div>
@@ -951,7 +958,8 @@ async function doLogout() {
 }
 
 function openProfileModal() {
-  document.getElementById('p-name').textContent = currentProfile.display_name || '—';
+  document.getElementById('p-name-input').value = currentProfile.display_name || '';
+  document.getElementById('name-error').style.display = 'none';
   document.getElementById('p-email').textContent = currentUser.email;
   const mine = allRegs.filter(r => r.user_id === currentUser.id);
   const el = document.getElementById('profile-regs');
@@ -965,6 +973,22 @@ function openProfileModal() {
     }).join('');
   }
   document.getElementById('profile-modal').classList.add('open');
+}
+
+async function saveDisplayName() {
+  const newName = document.getElementById('p-name-input').value.trim();
+  const errEl = document.getElementById('name-error');
+  errEl.style.display = 'none';
+  if (!newName) { errEl.textContent = 'Name darf nicht leer sein'; errEl.style.display = 'block'; return; }
+  if (newName === currentProfile.display_name) return;
+  try {
+    await api('profiles?id=eq.' + currentUser.id, { method: 'PATCH', body: JSON.stringify({ display_name: newName }) });
+    currentProfile.display_name = newName;
+    showToast('Name geändert.');
+  } catch(e) {
+    errEl.textContent = /duplicate|unique/i.test(e.message) ? 'Dieser Name ist schon vergeben' : 'Fehler beim Speichern';
+    errEl.style.display = 'block';
+  }
 }
 function closeProfileModal() { document.getElementById('profile-modal').classList.remove('open'); }
 
