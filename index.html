@@ -732,7 +732,19 @@ footer {
     <button class="modal-close" onclick="closeModal()">✕</button>
     <h2>Anmeldung</h2>
     <div class="modal-event-name" id="modal-event-name"></div>
-    <div class="field"><label>Angemeldet als</label><div class="field-static" id="modal-who"></div></div>
+
+    <div id="modal-account-view" style="display:none">
+      <div class="field"><label>Angemeldet als</label><div class="field-static" id="modal-who"></div></div>
+    </div>
+
+    <div id="modal-guest-view" style="display:none">
+      <div class="field"><label>Name</label><input type="text" id="modal-name" placeholder="Max Mustermann"></div>
+      <div class="field"><label>E-Mail</label><input type="email" id="modal-email" placeholder="max@beispiel.ch"></div>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin-top:-8px">
+        Oder <span style="text-decoration:underline;cursor:pointer;color:var(--gold-light)" onclick="closeModal();openAuthModal();">einloggen</span>, um deine Anmeldungen später im Profil zu sehen.
+      </p>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-gold" onclick="submitAnmeldung()" id="btn-submit">Anmelden</button>
       <button class="btn-outline" onclick="closeModal()">Abbrechen</button>
@@ -1043,22 +1055,38 @@ function renderEvents() {
 }
 
 function openModal(id, title) {
-  if (!currentUser) { openAuthModal(); showToast('Bitte zuerst anmelden'); return; }
   selectedEventId = id;
   document.getElementById('modal-event-name').textContent = title;
-  document.getElementById('modal-who').textContent = (currentProfile.display_name || '') + ' (' + currentUser.email + ')';
+  if (currentUser) {
+    document.getElementById('modal-account-view').style.display = 'block';
+    document.getElementById('modal-guest-view').style.display = 'none';
+    document.getElementById('modal-who').textContent = (currentProfile.display_name || '') + ' (' + currentUser.email + ')';
+  } else {
+    document.getElementById('modal-account-view').style.display = 'none';
+    document.getElementById('modal-guest-view').style.display = 'block';
+    document.getElementById('modal-name').value = '';
+    document.getElementById('modal-email').value = '';
+  }
   document.getElementById('modal').classList.add('open');
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
 async function submitAnmeldung() {
-  if (!currentUser) { closeModal(); openAuthModal(); return; }
   const btn = document.getElementById('btn-submit');
+  let payload;
+  if (currentUser) {
+    payload = { event_id: selectedEventId, user_id: currentUser.id, name: currentProfile.display_name, email: currentUser.email };
+  } else {
+    const name = document.getElementById('modal-name').value.trim();
+    const email = document.getElementById('modal-email').value.trim();
+    if (!name || !email) { showToast('Bitte Name und E-Mail eingeben'); return; }
+    payload = { event_id: selectedEventId, user_id: null, name, email };
+  }
   btn.textContent = 'Speichere...'; btn.disabled = true;
   try {
     const result = await api('registrations?select=*', {
       method: 'POST', prefer: 'return=representation',
-      body: JSON.stringify({ event_id: selectedEventId, user_id: currentUser.id, name: currentProfile.display_name, email: currentUser.email })
+      body: JSON.stringify(payload)
     });
     if (result && result[0]) {
       allRegs.push(result[0]);
